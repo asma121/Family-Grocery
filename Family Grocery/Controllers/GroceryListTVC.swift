@@ -53,16 +53,29 @@ class GroceryListTVC: UITableViewController {
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         let name = groceryItemList[indexPath.row]["name"] as? String
-        self.deletItem(itemName: name!)
+        let email = groceryItemList[indexPath.row]["addByUser"] as? String
+        
+        if email == UserDefaults.standard.value(forKey: "userEmail") as? String {
+            self.deletItem(itemName: name!)
+        } else {
+            self.warningAlert(message: " item added by another user.. \n you can't delete it ..")
+        }
+      
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let oldName = groceryItemList[indexPath.row]["name"] as? String
-        self.updateItemAlert(oldName: oldName!)
+        let email = groceryItemList[indexPath.row]["addByUser"] as? String
+        
+        if email == UserDefaults.standard.value(forKey: "userEmail") as? String {
+            self.updateItemAlert(oldName: oldName!)
+        } else {
+            self.warningAlert(message: " item added by another user.. \n you can't edit it ..")
+        }
+        
     }
  
 
-    
     @objc func familyOnlineList(){
         let  familyTVC = self.storyboard?.instantiateViewController(identifier: "FamilyTVC") as! FamilyTVC
         //self.numberOfOnlineUsers = familyTVC.onlineUsers.count
@@ -102,7 +115,13 @@ class GroceryListTVC: UITableViewController {
          present(alert, animated: true, completion: nil)
    }
     
-    
+    func warningAlert(message:String){
+        let alert = UIAlertController(title: "Warning", message: message, preferredStyle: .alert)
+          
+          alert.addAction(UIAlertAction(title: "Ok", style: .cancel, handler:nil))
+          
+          present(alert, animated: true, completion: nil)
+    }
     
     func validateAuth(){
         if FirebaseAuth.Auth.auth().currentUser == nil {

@@ -46,7 +46,37 @@ class FamilyTVC: UITableViewController {
 
     
     @objc func signoutButtonTapped(){
+        let alert = UIAlertController(title: "Sign Out", message: "would you want to Sign out?", preferredStyle: .alert)
         
+        alert.addAction(UIAlertAction(title: "Sign out", style: .destructive, handler: { action in
+            self.signOut()
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler:nil))
+        
+        present(alert, animated: true, completion: nil)
+
+    }
+    
+    func fetchOnlineUsers(){
+        DatabaseManger.shared.getOnlineUsers(completion: { result in
+            switch result {
+            case .success(let userCollection):
+                self.onlineUsers.removeAll()
+                let users = userCollection
+                for (_,value) in users {
+                    self.onlineUsers.append(value)
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
+                }
+            case .failure(let error):
+                print("faild to get users : \(error)")
+            }
+        })
+    }
+    
+    func signOut(){
         do{
             try FirebaseAuth.Auth.auth().signOut()
             let VC = self.storyboard?.instantiateViewController(identifier: "ViewController") as! ViewController
@@ -70,22 +100,4 @@ class FamilyTVC: UITableViewController {
         }
     }
     
-    func fetchOnlineUsers(){
-        DatabaseManger.shared.getOnlineUsers(completion: { result in
-            switch result {
-            case .success(let userCollection):
-                self.onlineUsers.removeAll()
-                let users = userCollection
-                for (_,value) in users {
-                    self.onlineUsers.append(value)
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                    }
-                }
-            case .failure(let error):
-                print("faild to get users : \(error)")
-            }
-        })
-    }
-
 }

@@ -24,6 +24,7 @@ class ViewController: UIViewController {
     @IBAction func loginButtonTapped(_ sender: Any) {
         guard let email = emailTF.text , !email.isEmpty,
               let password = passwordTf.text , !password.isEmpty else {
+            self.warningAlert(message: "please fill in all fields ..")
             return
         }
         
@@ -31,6 +32,7 @@ class ViewController: UIViewController {
             
             guard let result = authResult, error == nil else {
                     print("Failed to log in user with email \(email)")
+                    self.warningAlert(message: "invalid Email or Password ..")
                     return
                 }
             
@@ -53,14 +55,16 @@ class ViewController: UIViewController {
     @IBAction func signupButtonTapped(_ sender: Any) {
         
         guard let email = emailTF.text , !email.isEmpty,
-              let password = passwordTf.text , !password.isEmpty else {
+              let password = passwordTf.text , !password.isEmpty , password.count >= 6 else {
+              warningAlert(message: "please fill in all fields \n and make sure the password is at least 6 characters .. ")
             return
         }
         
         FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password, completion: { authResult , error in
             
             guard let result = authResult, error == nil else {
-                print("Error creating user )")
+                print("Error creating user")
+                self.warningAlert(message: "this email is already sign up ..")
                 return
             }
             let user = result.user
@@ -86,6 +90,14 @@ class ViewController: UIViewController {
             self.navigationController?.dismiss(animated: true, completion: nil)
         })
         
+    }
+    
+    func warningAlert(message:String){
+        let alert = UIAlertController(title: "Warning", message: message, preferredStyle: .alert)
+          
+          alert.addAction(UIAlertAction(title: "Ok", style: .cancel, handler:nil))
+          
+          present(alert, animated: true, completion: nil)
     }
     
 }
