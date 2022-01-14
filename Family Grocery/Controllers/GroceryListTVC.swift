@@ -6,46 +6,47 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class GroceryListTVC: UITableViewController {
+    
+    var groceryItemList = [Item]()
+   
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: nil)
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(addItemAlert))
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "nuoffa", style: .plain, target: self, action: #selector(familyOnlineList))
         self.navigationItem.title = "Groceries To Buy"
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        validateAuth()
+        fetchItems()
+       
     }
 
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-        return 0
+        return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return 0
+        return groceryItemList.count
     }
 
-    /*
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        // Configure the cell...
-
+        let cell = tableView.dequeueReusableCell(withIdentifier: "GroceryListCell", for: indexPath)
+  
         return cell
     }
-    */
-
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
-    }
-    */
+ 
 
     /*
     // Override to support editing the table view.
@@ -59,34 +60,60 @@ class GroceryListTVC: UITableViewController {
     }
     */
 
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
 
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
     
     @objc func familyOnlineList(){
         let  familyTVC = self.storyboard?.instantiateViewController(identifier: "FamilyTVC") as! FamilyTVC
         navigationController?.pushViewController(familyTVC, animated: true)
+    }
+    
+    @objc func addItemAlert(){
+        let alert = UIAlertController(title: "Grocery Item", message: "Add an Item", preferredStyle: .alert)
+        alert.addTextField()
+          
+        alert.addAction(UIAlertAction(title: "Save", style: .default , handler: { action in
+            guard let itemName = alert.textFields?[0].text , !itemName.isEmpty else {
+                return
+            }
+            self.addItem(itemName: itemName)
+          }))
+          
+          alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler:nil))
+          
+          present(alert, animated: true, completion: nil)
+    }
+    
+    func validateAuth(){
+        if FirebaseAuth.Auth.auth().currentUser == nil {
+            let VC = self.storyboard?.instantiateViewController(identifier: "ViewController") as! ViewController
+            let nav = UINavigationController(rootViewController: VC)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+        }
+    }
+    
+    func addItem(itemName:String){
+        guard let user = UserDefaults.standard.value(forKey: "userEmail") as? String else {
+            return
+        }
+        let item = Item(name: itemName, addByUser: user)
+        DatabaseManger.shared.insertItem(with: item, completion: { success in
+            if success{
+                print(" item added ..")
+            }
+        })
+    }
+    
+    func fetchItems(){
+        DatabaseManger.shared.getGroceryItems { result in
+            switch result {
+            case .success(let groceryItems):
+                print("List \(self.groceryItemList)")
+                print("items fetched .. \(groceryItems)")
+            case .failure(let error):
+                print("faild to get items \(error)")
+            }
+        }
     }
 
 }

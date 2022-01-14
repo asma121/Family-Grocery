@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class ViewController: UIViewController {
 
@@ -16,22 +17,76 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        self.navigationController?.navigationBar.backgroundColor = .lightGray
+        //self.navigationController?.navigationBar.backgroundColor = .lightGray
+        passwordTf.isSecureTextEntry = true
     }
 
     @IBAction func loginButtonTapped(_ sender: Any) {
-       navgaiteToGroceryListTVC()
+        guard let email = emailTF.text , !email.isEmpty,
+              let password = passwordTf.text , !password.isEmpty else {
+            return
+        }
+        
+        FirebaseAuth.Auth.auth().signIn(withEmail: email, password: password, completion: { authResult , error in
+            
+            guard let result = authResult, error == nil else {
+                    print("Failed to log in user with email \(email)")
+                    return
+                }
+            
+            let user = result.user
+            print("logged in user: \(user)")
+            
+            let onlineUser = User(id: user.uid, email: email)
+            DatabaseManger.shared.onlineUsers(with: onlineUser, completion: { success in
+                if success {
+                    print ("\(onlineUser.email) online")
+                }
+            })
+            UserDefaults.standard.set(onlineUser.id, forKey: "userID")
+            UserDefaults.standard.set(onlineUser.email, forKey: "userEmail")
+            self.navigationController?.dismiss(animated: true, completion: nil)
+        })
+        
     }
     
     @IBAction func signupButtonTapped(_ sender: Any) {
-        navgaiteToGroceryListTVC()
+        
+        guard let email = emailTF.text , !email.isEmpty,
+              let password = passwordTf.text , !password.isEmpty else {
+            return
+        }
+        
+        FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password, completion: { authResult , error in
+            
+            guard let result = authResult, error == nil else {
+                print("Error creating user )")
+                return
+            }
+            let user = result.user
+            print("Created User: \(user.uid)")
+            
+            let newUser = User(id: user.uid, email: email)
+            DatabaseManger.shared.insertUser(with: newUser, completion: { success in
+                if success {
+                    print ("new user added \(newUser)")
+                }else {
+                    print("faild to add new user .. ")
+                }
+            })
+            
+            DatabaseManger.shared.onlineUsers(with: newUser, completion: { success in
+                if success {
+                    print ("\(newUser.email) online")
+                }
+                
+            })
+            UserDefaults.standard.set(newUser.id, forKey: "userID")
+            UserDefaults.standard.set(newUser.email, forKey: "userEmail")
+            self.navigationController?.dismiss(animated: true, completion: nil)
+        })
+        
     }
     
-    func navgaiteToGroceryListTVC(){
-        let groceryListTVC = self.storyboard?.instantiateViewController(identifier: "GroceryListTVC") as! GroceryListTVC
-        let nav = UINavigationController(rootViewController: groceryListTVC)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
-    }
 }
 

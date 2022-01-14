@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class FamilyTVC: UITableViewController {
 
@@ -85,10 +86,29 @@ class FamilyTVC: UITableViewController {
     */
     
     @objc func signoutButtonTapped(){
-        let VC = self.storyboard?.instantiateViewController(identifier: "ViewController") as! ViewController
-        let nav = UINavigationController(rootViewController: VC)
-        nav.modalPresentationStyle = .fullScreen
-        present(nav, animated: true)
+        
+        do{
+            try FirebaseAuth.Auth.auth().signOut()
+            let VC = self.storyboard?.instantiateViewController(identifier: "ViewController") as! ViewController
+            let nav = UINavigationController(rootViewController: VC)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+            
+            guard let userID = UserDefaults.standard.value(forKey: "userID") as? String,
+                  let userEmail = UserDefaults.standard.value(forKey: "userEmail") as? String else {
+                return
+            }
+            let offlineUser = User(id: userID, email: userEmail)
+            
+            DatabaseManger.shared.offlineUser(user: offlineUser, completion: { success in
+                if success{
+                    print("\(offlineUser.email) offline")
+                }
+            })
+        }catch{
+            print("Faild to logout")
+        }
+       
         
     }
 

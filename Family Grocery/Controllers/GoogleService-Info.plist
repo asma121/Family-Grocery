@@ -30,5 +30,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:713573407358:ios:ff7f21b85e2ab0de04562f</string>
+	<key>DATABASE_URL</key>
+	<string>https://family-grocery-b393b-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>
