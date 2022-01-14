@@ -122,6 +122,16 @@ extension DatabaseManger {
         }
     }
     
+    public func getOnlineUsers(completion: @escaping (Result<[String:String], Error>) -> Void){
+        self.database.child("online").observeSingleEvent(of: .value, with: { snapshot in
+            guard let result = snapshot.value as? [String:String] else {
+                completion(.failure(DatabaseError.failedToFetch))
+                return
+            }
+            completion(.success(result))
+        })
+    }
+    
     public func offlineUser(user:User , completion : @escaping (Bool) -> Void){
         self.database.child("online").observeSingleEvent(of: .value) { snapshot in
            if var usersCollection = snapshot.value as? [String:String] {
@@ -189,6 +199,49 @@ extension DatabaseManger {
             }
             completion(.success(result))
         })
+    }
+    
+    public func updateGroceryItem(oldItemName : String, newItemName:String, completion:@escaping (Bool)->Void ){
+        
+        guard let addByUser = UserDefaults.standard.value(forKey: "userEmail") as? String else {
+            return
+        }
+        self.database.child("grocery-items").observeSingleEvent(of: .value) { snapshot in
+           if var items = snapshot.value as? [String:Any] {
+            let newItem = Item(name: newItemName, addByUser: addByUser)
+             items[oldItemName] = nil
+            items[newItem.name] = [
+                "name":newItem.name,
+                "addByUser":newItem.addByUser,
+                "completed":newItem.completed
+            ]
+            
+            self.database.child("grocery-items").setValue(items) { error, _ in
+                guard error == nil else {
+                    completion(false)
+                    return
+                }
+                completion(true)
+               }
+            }
+        }
+        
+    }
+    
+    public func deleteGroceryItem(itemName:String , completion : @escaping (Bool) -> Void){
+        self.database.child("grocery-items").observeSingleEvent(of: .value) { snapshot in
+           if var items = snapshot.value as? [String:Any] {
+             items[itemName] = nil
+            
+            self.database.child("grocery-items").setValue(items) { error, _ in
+                guard error == nil else {
+                    completion(false)
+                    return
+                }
+                completion(true)
+               }
+            }
+        }
     }
     
     public enum DatabaseError: Error {

@@ -10,22 +10,25 @@ import FirebaseAuth
 
 class GroceryListTVC: UITableViewController {
     
-    var groceryItemList = [Item]()
+    public var groceryItemList = [[String:Any]]()
+    public var numberOfOnlineUsers = 0
    
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(addItemAlert))
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "nuoffa", style: .plain, target: self, action: #selector(familyOnlineList))
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "\(numberOfOnlineUsers)", style: .plain, target: self, action: #selector(familyOnlineList))
         self.navigationItem.title = "Groceries To Buy"
+        
+        fetchItems()
+       
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         validateAuth()
         fetchItems()
-       
     }
 
     // MARK: - Table view data source
@@ -37,33 +40,32 @@ class GroceryListTVC: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return groceryItemList.count
+        return  groceryItemList.count
     }
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "GroceryListCell", for: indexPath)
-  
-        return cell
+        cell.textLabel?.text = groceryItemList[indexPath.row]["name"] as? String
+        cell.detailTextLabel?.text = groceryItemList[indexPath.row]["addByUser"] as? String
+       return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        let name = groceryItemList[indexPath.row]["name"] as? String
+        self.deletItem(itemName: name!)
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let oldName = groceryItemList[indexPath.row]["name"] as? String
+        self.updateItemAlert(oldName: oldName!)
     }
  
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
-    }
-    */
-
 
     
     @objc func familyOnlineList(){
         let  familyTVC = self.storyboard?.instantiateViewController(identifier: "FamilyTVC") as! FamilyTVC
+        //self.numberOfOnlineUsers = familyTVC.onlineUsers.count
         navigationController?.pushViewController(familyTVC, animated: true)
     }
     
@@ -83,6 +85,25 @@ class GroceryListTVC: UITableViewController {
           present(alert, animated: true, completion: nil)
     }
     
+    func updateItemAlert(oldName:String){
+       let alert = UIAlertController(title: "Grocery Item", message: "update an Item", preferredStyle: .alert)
+       alert.addTextField()
+        alert.textFields?[0].text = oldName
+         
+       alert.addAction(UIAlertAction(title: "Save", style: .default , handler: { action in
+           guard let itemName = alert.textFields?[0].text , !itemName.isEmpty else {
+               return
+           }
+           self.updateItem(oldName: oldName, newName: itemName)
+         }))
+         
+         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler:nil))
+         
+         present(alert, animated: true, completion: nil)
+   }
+    
+    
+    
     func validateAuth(){
         if FirebaseAuth.Auth.auth().currentUser == nil {
             let VC = self.storyboard?.instantiateViewController(identifier: "ViewController") as! ViewController
@@ -100,6 +121,7 @@ class GroceryListTVC: UITableViewController {
         DatabaseManger.shared.insertItem(with: item, completion: { success in
             if success{
                 print(" item added ..")
+                self.fetchItems()
             }
         })
     }
@@ -108,12 +130,38 @@ class GroceryListTVC: UITableViewController {
         DatabaseManger.shared.getGroceryItems { result in
             switch result {
             case .success(let groceryItems):
-                print("List \(self.groceryItemList)")
-                print("items fetched .. \(groceryItems)")
+                self.groceryItemList.removeAll()
+                for value in groceryItems.values {
+                    guard let item = value as? [String:Any] else {
+                        return
+                    }
+                    self.groceryItemList.append(item)
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
+                }
             case .failure(let error):
                 print("faild to get items \(error)")
             }
         }
+    }
+    
+    func updateItem(oldName: String , newName:String){
+        DatabaseManger.shared.updateGroceryItem(oldItemName: oldName, newItemName: newName, completion: { success in
+            if success{
+                print("item updated .. ")
+                self.fetchItems()
+            }
+        })
+    }
+    
+    func deletItem(itemName : String){
+        DatabaseManger.shared.deleteGroceryItem(itemName: itemName, completion: { success in
+            if success {
+                print("item Deleted .. ")
+                self.fetchItems()
+            }
+        })
     }
 
 }
