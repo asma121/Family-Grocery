@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C33B39EE2792F6CD00223421 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = C33B39ED2792F6CD00223421 /* User.swift */; };
+		C33B39F02792F72900223421 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = C33B39EF2792F72900223421 /* Item.swift */; };
 		C37903C8278EB5EF005CB748 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C37903C7278EB5EF005CB748 /* AppDelegate.swift */; };
 		C37903CA278EB5EF005CB748 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C37903C9278EB5EF005CB748 /* SceneDelegate.swift */; };
 		C37903CC278EB5EF005CB748 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C37903CB278EB5EF005CB748 /* ViewController.swift */; };
@@ -25,6 +27,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C33B39ED2792F6CD00223421 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		C33B39EF2792F72900223421 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		C37903C4278EB5EF005CB748 /* Family Grocery.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Family Grocery.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C37903C7278EB5EF005CB748 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C37903C9278EB5EF005CB748 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -55,6 +59,25 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C33B39EC2792F65000223421 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C37903CD278EB5EF005CB748 /* Main.storyboard */,
+				C37903D3278EB5F2005CB748 /* Assets.xcassets */,
+				C37903D5278EB5F2005CB748 /* LaunchScreen.storyboard */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C33B39F12792F77600223421 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				C33B39ED2792F6CD00223421 /* User.swift */,
+				C33B39EF2792F72900223421 /* Item.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		C37903BB278EB5EF005CB748 = {
 			isa = PBXGroup;
 			children = (
@@ -76,10 +99,10 @@
 			children = (
 				C37903F0278EEFE7005CB748 /* Resuorces */,
 				C37903ED278EEF42005CB748 /* Controllers */,
-				C37903CD278EB5EF005CB748 /* Main.storyboard */,
-				C37903D3278EB5F2005CB748 /* Assets.xcassets */,
-				C37903D5278EB5F2005CB748 /* LaunchScreen.storyboard */,
+				C33B39EC2792F65000223421 /* Views */,
+				C33B39F12792F77600223421 /* Models */,
 				C37903D8278EB5F2005CB748 /* Info.plist */,
+				C37903F327904426005CB748 /* GoogleService-Info.plist */,
 				C37903D0278EB5EF005CB748 /* Family_Grocery.xcdatamodeld */,
 			);
 			path = "Family Grocery";
@@ -91,7 +114,6 @@
 				C37903CB278EB5EF005CB748 /* ViewController.swift */,
 				C37903DE278EBDB6005CB748 /* GroceryListTVC.swift */,
 				C37903E0278ECE35005CB748 /* FamilyTVC.swift */,
-				C37903F327904426005CB748 /* GoogleService-Info.plist */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -187,9 +209,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				C37903CC278EB5EF005CB748 /* ViewController.swift in Sources */,
+				C33B39F02792F72900223421 /* Item.swift in Sources */,
 				C37903C8278EB5EF005CB748 /* AppDelegate.swift in Sources */,
 				C37903DF278EBDB6005CB748 /* GroceryListTVC.swift in Sources */,
 				C37903E1278ECE35005CB748 /* FamilyTVC.swift in Sources */,
+				C33B39EE2792F6CD00223421 /* User.swift in Sources */,
 				C37903CA278EB5EF005CB748 /* SceneDelegate.swift in Sources */,
 				C37903D2278EB5EF005CB748 /* Family_Grocery.xcdatamodeld in Sources */,
 				C37903EF278EEFDB005CB748 /* DatabaseManager.swift in Sources */,

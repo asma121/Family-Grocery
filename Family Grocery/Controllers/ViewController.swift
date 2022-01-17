@@ -16,8 +16,6 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        //self.navigationController?.navigationBar.backgroundColor = .lightGray
         passwordTf.isSecureTextEntry = true
     }
 
@@ -45,6 +43,7 @@ class ViewController: UIViewController {
                     print ("\(onlineUser.email) online")
                 }
             })
+            
             UserDefaults.standard.set(onlineUser.id, forKey: "userID")
             UserDefaults.standard.set(onlineUser.email, forKey: "userEmail")
             self.navigationController?.dismiss(animated: true, completion: nil)
@@ -71,14 +70,7 @@ class ViewController: UIViewController {
             print("Created User: \(user.uid)")
             
             let newUser = User(id: user.uid, email: email)
-            DatabaseManger.shared.insertUser(with: newUser, completion: { success in
-                if success {
-                    print ("new user added \(newUser)")
-                }else {
-                    print("faild to add new user .. ")
-                }
-            })
-            
+
             DatabaseManger.shared.onlineUsers(with: newUser, completion: { success in
                 if success {
                     print ("\(newUser.email) online")

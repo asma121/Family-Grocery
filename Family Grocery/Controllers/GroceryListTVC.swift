@@ -8,17 +8,22 @@
 import UIKit
 import FirebaseAuth
 
-class GroceryListTVC: UITableViewController {
+class GroceryListTVC: UITableViewController , OnlineUserDelegate{
+    
+    func getOnlineUsers(number: Int) {
+        numberOfOnlineUsers = number
+    }
+    
     
     public var groceryItemList = [[String:Any]]()
-    public var numberOfOnlineUsers = 0
+    public var numberOfOnlineUsers = 1
    
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(addItemAlert))
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "\(numberOfOnlineUsers)", style: .plain, target: self, action: #selector(familyOnlineList))
+
         self.navigationItem.title = "Groceries To Buy"
         
         fetchItems()
@@ -27,10 +32,12 @@ class GroceryListTVC: UITableViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "\(numberOfOnlineUsers)", style: .plain, target: self, action: #selector(familyOnlineList))
         validateAuth()
         fetchItems()
+        
     }
-
+    
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -45,13 +52,16 @@ class GroceryListTVC: UITableViewController {
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "GroceryListCell", for: indexPath)
         cell.textLabel?.text = groceryItemList[indexPath.row]["name"] as? String
         cell.detailTextLabel?.text = groceryItemList[indexPath.row]["addByUser"] as? String
+        
        return cell
     }
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        
         let name = groceryItemList[indexPath.row]["name"] as? String
         let email = groceryItemList[indexPath.row]["addByUser"] as? String
         
@@ -64,6 +74,7 @@ class GroceryListTVC: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         let oldName = groceryItemList[indexPath.row]["name"] as? String
         let email = groceryItemList[indexPath.row]["addByUser"] as? String
         
@@ -78,9 +89,10 @@ class GroceryListTVC: UITableViewController {
 
     @objc func familyOnlineList(){
         let  familyTVC = self.storyboard?.instantiateViewController(identifier: "FamilyTVC") as! FamilyTVC
-        //self.numberOfOnlineUsers = familyTVC.onlineUsers.count
+        familyTVC.usersDelegate = self
         navigationController?.pushViewController(familyTVC, animated: true)
     }
+    
     
     @objc func addItemAlert(){
         let alert = UIAlertController(title: "Grocery Item", message: "Add an Item", preferredStyle: .alert)
@@ -97,6 +109,7 @@ class GroceryListTVC: UITableViewController {
           
           present(alert, animated: true, completion: nil)
     }
+    
     
     func updateItemAlert(oldName:String){
        let alert = UIAlertController(title: "Grocery Item", message: "update an Item", preferredStyle: .alert)
@@ -115,6 +128,7 @@ class GroceryListTVC: UITableViewController {
          present(alert, animated: true, completion: nil)
    }
     
+    
     func warningAlert(message:String){
         let alert = UIAlertController(title: "Warning", message: message, preferredStyle: .alert)
           
@@ -122,6 +136,7 @@ class GroceryListTVC: UITableViewController {
           
           present(alert, animated: true, completion: nil)
     }
+    
     
     func validateAuth(){
         if FirebaseAuth.Auth.auth().currentUser == nil {
@@ -131,6 +146,7 @@ class GroceryListTVC: UITableViewController {
             present(nav, animated: true)
         }
     }
+    
     
     func addItem(itemName:String){
         guard let user = UserDefaults.standard.value(forKey: "userEmail") as? String else {
@@ -144,6 +160,7 @@ class GroceryListTVC: UITableViewController {
             }
         })
     }
+    
     
     func fetchItems(){
         DatabaseManger.shared.getGroceryItems { result in
@@ -165,6 +182,7 @@ class GroceryListTVC: UITableViewController {
         }
     }
     
+    
     func updateItem(oldName: String , newName:String){
         DatabaseManger.shared.updateGroceryItem(oldItemName: oldName, newItemName: newName, completion: { success in
             if success{
@@ -173,6 +191,7 @@ class GroceryListTVC: UITableViewController {
             }
         })
     }
+    
     
     func deletItem(itemName : String){
         DatabaseManger.shared.deleteGroceryItem(itemName: itemName, completion: { success in

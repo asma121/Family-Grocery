@@ -11,6 +11,7 @@ import FirebaseAuth
 class FamilyTVC: UITableViewController {
     
     var onlineUsers = [String]()
+    var usersDelegate:OnlineUserDelegate?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,8 +25,9 @@ class FamilyTVC: UITableViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         fetchOnlineUsers()
+        
     }
-
+    
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -66,6 +68,7 @@ class FamilyTVC: UITableViewController {
                 let users = userCollection
                 for (_,value) in users {
                     self.onlineUsers.append(value)
+                    self.usersDelegate?.getOnlineUsers(number: self.onlineUsers.count)
                     DispatchQueue.main.async {
                         self.tableView.reloadData()
                     }
@@ -88,11 +91,11 @@ class FamilyTVC: UITableViewController {
                   let userEmail = UserDefaults.standard.value(forKey: "userEmail") as? String else {
                 return
             }
-            let offlineUser = User(id: userID, email: userEmail)
+            let user = User(id: userID, email: userEmail)
             
-            DatabaseManger.shared.offlineUser(user: offlineUser, completion: { success in
+            DatabaseManger.shared.offlineUser(user: user, completion: { success in
                 if success{
-                    print("\(offlineUser.email) offline")
+                    print("\(user.email) offline")
                 }
             })
         }catch{
@@ -100,4 +103,8 @@ class FamilyTVC: UITableViewController {
         }
     }
     
+}
+
+protocol OnlineUserDelegate {
+    func getOnlineUsers(number : Int)
 }

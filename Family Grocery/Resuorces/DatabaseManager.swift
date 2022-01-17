@@ -16,85 +16,25 @@ final class DatabaseManger {
     
     private let database = Database.database().reference()
     
-    static func safeEmail(emailAddress : String) -> String {
-        var safeEmail = emailAddress.replacingOccurrences(of: ".", with: "-")
-        safeEmail = safeEmail.replacingOccurrences(of: "@", with: "-")
-        return safeEmail
+    // '/' '.' '#' '$' '[' or ']''
+    public func itemKey(key : String) -> String {
+        var safeKey = key.replacingOccurrences(of: ".", with: " ")
+        safeKey = safeKey.replacingOccurrences(of: "/", with: " ")
+        safeKey = safeKey.replacingOccurrences(of: "#", with: " ")
+        safeKey = safeKey.replacingOccurrences(of: "$", with: " ")
+        safeKey = safeKey.replacingOccurrences(of: "[", with: " ")
+        safeKey = safeKey.replacingOccurrences(of: "]", with: " ")
+        return safeKey
     }
-    
+        
 }
 
 // MARK: - account management
 extension DatabaseManger {
-    // have a completion handler because the function to get data out of the database is asynchrounous so we need a completion block
-    
-    public func userExists(with email:String, completion: @escaping ((Bool) -> Void)) {
-        // will return true if the user email does not exist
-        
-        // firebase allows you to observe value changes on any entry in your NoSQL database by specifying the child you want to observe for, and what type of observation you want
-        // let's observe a single event (query the database once)
-        
-       // var safeEmail = DatabaseManger.safeEmail(emailAddress: email)
-        
-        var safeEmail = email.replacingOccurrences(of: ".", with: "-")
-        safeEmail = safeEmail.replacingOccurrences(of: "@", with: "-")
-        
-        database.child(safeEmail).observeSingleEvent(of: .value) { snapshot in
-            // snapshot has a value property that can be optional if it doesn't exist
-            
-            guard snapshot.value as? String != nil else {
-                // otherwise... let's create the account
-                completion(false)
-                return
-            }
-            
-            // if we are able to do this, that means the email exists already!
-            
-            completion(true) // the caller knows the email exists already
-        }
-    }
-    
-    /// Insert new user to database
-    public func insertUser(with user: User, completion: @escaping (Bool) -> Void){
-        // adding completion block here so once it's done writing to database, we want to upload the image
-        self.database.child("users").observeSingleEvent(of: .value) { snapshot in
-            // snapshot is not the value itself
-            if var usersCollection = snapshot.value as? [String: String] {
-                usersCollection[user.id] = user.email
-                
-                self.database.child("users").setValue(usersCollection) { error, _ in
-                    guard error == nil else {
-                        completion(false)
-                        return
-                    }
-                    completion(true)
-                }
-                
-            }else{
-                // create that array
-                let newCollection: [String: String] =
-                    [
-                        user.id : user.email
-                    ]
-                
-                self.database.child("users").setValue(newCollection) { error, _ in
-                    guard error == nil else {
-                        completion(false)
-                        return
-                    }
-                    completion(true)
-                }
-            }
-        }
-    }
-    
-    /// online users .. 
+    /// online users .. append to "online" if it's exist  or create it if it's not ..
     public func onlineUsers(with user: User, completion: @escaping (Bool) -> Void){
-        // adding completion block here so once it's done writing to database, we want to upload the image
         self.database.child("online").observeSingleEvent(of: .value) { snapshot in
-            // snapshot is not the value itself
             if var usersCollection = snapshot.value as? [String: String] {
-                // if var so we can make it mutable so we can append more contents into the array, and update it
                 usersCollection[user.id] = user.email
                 
                 self.database.child("online").setValue(usersCollection) { error, _ in
@@ -122,6 +62,7 @@ extension DatabaseManger {
         }
     }
     
+    /// get online users by observing root "online" ..
     public func getOnlineUsers(completion: @escaping (Result<[String:String], Error>) -> Void){
         self.database.child("online").observeSingleEvent(of: .value, with: { snapshot in
             guard let result = snapshot.value as? [String:String] else {
@@ -132,6 +73,7 @@ extension DatabaseManger {
         })
     }
     
+    /// putting user in offline mode by assgining nil ..
     public func offlineUser(user:User , completion : @escaping (Bool) -> Void){
         self.database.child("online").observeSingleEvent(of: .value) { snapshot in
            if var usersCollection = snapshot.value as? [String:String] {
@@ -152,18 +94,18 @@ extension DatabaseManger {
 // MARK: - dealing with Grocery Items
 
 extension DatabaseManger {
-    
+    /// insert an item .. append to "grocery-items" if it's exist  or create it if it's not ..
     public func insertItem(with item:Item, completion: @escaping (Bool) -> Void){
+        let key = itemKey(key: item.name)
         self.database.child("grocery-items").observeSingleEvent(of: .value) { snapshot in
-            // snapshot is not the value itself
-            if var usersCollection = snapshot.value as? [String:Any] {
-                usersCollection[item.name] = [
+            if var itemsCollection = snapshot.value as? [String:Any] {
+                itemsCollection[key] = [
                     "name":item.name,
                     "addByUser":item.addByUser,
                     "completed":item.completed
                 ]
                 
-                self.database.child("grocery-items").setValue(usersCollection) { error, _ in
+                self.database.child("grocery-items").setValue(itemsCollection) { error, _ in
                     guard error == nil else {
                         completion(false)
                         return
@@ -191,6 +133,7 @@ extension DatabaseManger {
         }
     }
     
+    /// get grocery Items by observing root "grocery-items" ..
     public func getGroceryItems(completion:@escaping (Result<[String:Any], Error >)->Void){
         self.database.child("grocery-items").observeSingleEvent(of: .value, with: {snapshot in
             guard let result = snapshot.value as? [String:Any] else {
@@ -201,16 +144,19 @@ extension DatabaseManger {
         })
     }
     
+    /// updating item by assgining nil to it  .. then add the new one ..
     public func updateGroceryItem(oldItemName : String, newItemName:String, completion:@escaping (Bool)->Void ){
-        
+      
         guard let addByUser = UserDefaults.standard.value(forKey: "userEmail") as? String else {
             return
         }
         self.database.child("grocery-items").observeSingleEvent(of: .value) { snapshot in
            if var items = snapshot.value as? [String:Any] {
+            let oldKey = self.itemKey(key: oldItemName)
+            let newKey = self.itemKey(key: newItemName)
             let newItem = Item(name: newItemName, addByUser: addByUser)
-             items[oldItemName] = nil
-            items[newItem.name] = [
+             items[oldKey] = nil
+            items[newKey] = [
                 "name":newItem.name,
                 "addByUser":newItem.addByUser,
                 "completed":newItem.completed
@@ -228,6 +174,7 @@ extension DatabaseManger {
         
     }
     
+    /// deleting item by assgining nil to it  ..
     public func deleteGroceryItem(itemName:String , completion : @escaping (Bool) -> Void){
         self.database.child("grocery-items").observeSingleEvent(of: .value) { snapshot in
            if var items = snapshot.value as? [String:Any] {
@@ -249,13 +196,3 @@ extension DatabaseManger {
        }
 }
 
-struct User{
-    var id:String
-    var email:String
-}
-
-struct Item {
-    var name:String
-    var addByUser : String
-    var completed = false
-}
